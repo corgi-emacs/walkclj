@@ -1,13 +1,51 @@
+;;; walkclj.el --- Manipulate Clojure parse trees
+;;
+;; Filename: walkclj.el
+;; Author: Arne Brasseur
+;; Maintainer: Arne Brasseur
+;; Created: Mi Jul 18 09:39:10 2018 (+0200)
+;; Version: 0.1.0
+;; Package-Requires: ((emacs "25") (parseclj "20180602.1306") (treepy "20170722.355"))
+;; Last-Updated:
+;;           By:
+;;     Update #: 0
+;; URL: https://github.com/plexus/walkclj
+;; Keywords: languages
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;; Commentary:
+;;
+;; A complementary library to parseclj. Experimental.
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;; Change Log:
+;;
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or (at
+;; your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;; Code:
 
-(setq ast
-      (with-temp-buffer
-        (insert-file-contents "/home/arne/github/clojure/src/clj/clojure/core.clj")
-        (goto-char (point-min))
-        (parseclj-parse-clojure)))
+(require 'treepy)
+(require 'parseclj)
 
-
-(defvar walkclj-function-names '(
-                                 ffirst
+(defvar walkclj-function-names '(ffirst
                                  first
                                  keyword?
                                  last
@@ -17,8 +55,7 @@
                                  name
                                  second
                                  symbol?
-                                 unwrap-meta
-                                 ))
+                                 unwrap-meta))
 
 (defmacro walkclj-do (&rest body)
   (cons 'progn
@@ -69,207 +106,31 @@
     (:symbol (a-get form :form))
     (:keyword (substring (a-get form :form) 1))))
 
-(equal "foo"
-       (walkclj-do (name (first (parseclj-parse-clojure "foo")))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(equal 'the-sym 
-       (walkclj-do (unwrap-meta (first (parseclj-parse-clojure "^{} the-sym")))))
+(defun walkclj-current-ns ()
+  (save-excursion
+    (goto-char 1)
+    (let ((ns-form (parseclj-parse-clojure :read-one t)))
+      (walkclj-do
+       (when (and (list? ns-form) (eq 'ns (a-get (first ns-form) :value)))
+         (name (unwrap-meta (second ns-form))))))))
 
-(walkclj-do
- (name (unwrap-meta (second (first ast)))))
+;; (equal "foo"
+;;        (walkclj-do (name (first (parseclj-parse-clojure "foo")))))
 
-(macroexpand-1
- '(walkclj-do
-   (:foo (first ast))))
+;; (equal 'the-sym
+;;        (a-get
+;;         (walkclj-do (unwrap-meta (first (parseclj-parse-clojure "^{} the-sym"))))
+;;         :value))
 
-(walkclj-do
- (symbol?
-  (ffirst ast)))
+;; (setq ast
+;;       (with-temp-buffer
+;;         (insert-file-contents "/home/arne/github/clojure/src/clj/clojure/core.clj")
+;;         (goto-char (point-min))
+;;         (parseclj-parse-clojure :read-one t)))
 
-(defun value-p (x)
-  (and (parseclj-ast-node-p x)
-       (not (member (parseclj-ast-node-type x) '(:whitespace :comment)))))
-(parseclj-parse-clojure "^  :meta1 ^  :meta2 the-sym"
-                        :fail-fast nil
-                        :value-p (lambda (x) (and (parseclj-ast-node-p x)
-                                                  (not (member (parseclj-ast-node-type x) '(:whitespace :comment))))))
-(parseclj-parse-clojure "^  :meta1 ^  :meta2 the-sym" :fail-fast nil)
-((:node-type . :root)
- (:position . 1)
- (:children ((:node-type . :symbol)
-             (:position . 21)
-             (:form . "the-sym")
-             (:value . the-sym)
-             (:meta (:value . :meta1)
-                    (:form . ":meta1")
-                    (:position . 4)
-                    (:node-type . :keyword)))))
+(provide 'walkclj)
 
-((:node-type . :root)
- (:position . 1)
- (:children ((:token-type . :metadata)
-             (:form . "^")
-             (:pos . 1))
-            ((:node-type . :keyword)
-             (:position . 4)
-             (:form . ":meta1")
-             (:value . :meta1))
-            ((:value . the-sym)
-             (:form . "the-sym")
-             (:position . 21)
-             (:node-type . :symbol)
-             (:meta (:value . :meta2)
-                    (:form . ":meta2")
-                    (:position . 14)
-                    (:node-type . :keyword)))))a
-
-((:node-type . :root)
- (:position . 1)
- (:children ((:token-type . :metadata)
-             (:form . "^")
-             (:pos . 1))
-            ((:node-type . :keyword)
-             (:position . 4)
-             (:form . ":meta1")
-             (:value . :meta1))
-            ((:meta (:node-type . :keyword)
-                    (:position . 14)
-                    (:form . ":meta2")
-                    (:value . :meta2))
-             (:node-type . :symbol)
-             (:position . 21)
-             (:form . "the-sym")
-             (:value . the-sym))))
-
-
-((:node-type . :root)
- (:position . 1)
- (:children ((:node-type . :symbol)
-             (:position . 21)
-             (:form . "the-sym")
-             (:value . the-sym)
-             (:meta . ((:node-type . :keyword)
-                       (:position . 14)
-                       (:form . ":meta2")
-                       (:value . :meta2)))
-             (:meta (:node-type . :keyword)
-                    (:position . 4)
-                    (:form . ":meta1")
-                    (:value . :meta1)))))
-(parseclj-ast-node-p
- '((:meta (:node-type . :keyword) (:position . 14) (:form . ":meta2") (:value . :meta2))
-   (:node-type . :symbol)
-   (:position . 21)
-   (:form . "the-sym")
-   (:value . the-sym)))
-
-((:node-type . :root)
- (:position . 1)
- (:children ((:meta (:node-type . :keyword) (:position . 4) (:form . ":meta1") (:value . :meta1)) (:token-type . :metadata) (:form . "^") (:pos . 11)) ((:node-type . :symbol) (:position . 21) (:form . "the-sym") (:value . the-sym))))
-
-((:node-type . :root)
- (:position . 1)
- (:children ((:meta (:node-type . :keyword) (:position . 2) (:form . ":meta1") (:value . :meta1))
-             (:token-type . :metadata)
-             (:form . "^")
-             (:pos . 9))
-            ((:node-type . :symbol)
-             (:position . 17)
-             (:form . "the-sym")
-             (:value . the-sym))))
-
-((:node-type . :root)
- (:position . 1)
- (:children ((:meta (:node-type . :keyword) (:position . 2) (:form . ":foo") (:value . :foo))
-             (:node-type . :symbol)
-             (:position . 7)
-             (:form . "bar")
-             (:value . bar))))
-
-((:node-type . :root)
- (:position . 1)
- (:children ((:meta (:node-type . :keyword) (:position . 2) (:form . ":xxx") (:value . :xxx))
-             (:token-type . :metadata)
-             (:form . "^")
-             (:pos . 7))
-            ((:node-type . :symbol)
-             (:position . 13)
-             (:form . "bar")
-             (:value . bar))))
-
-((:node-type . :root)
- (:position . 1)
- (:children ((:meta . ((:node-type . :keyword) (:position . 2) (:form . ":xxx") (:value . :xxx)))
-             (:token-type . :metadata)
-             (:form . "^")
-             (:pos . 7))
-            ((:node-type . :symbol)
-             (:position . 13)
-             (:form . "bar")
-             (:value . bar))))
-
-((:node-type . :root)
- (:position . 1)
- (:children ((:token-type . :metadata)
-             (:form . "^")
-             (:pos . 1))
-            ((:node-type . :keyword)
-             (:position . 2)
-             (:form . ":xxx")
-             (:value . :xxx))
-            ((:meta . ((:node-type . :keyword)
-                       (:position . 8)
-                       (:form . ":foo")
-                       (:value . :foo)))
-             (:node-type . :symbol)
-             (:position . 13)
-             (:form . "bar")
-             (:value . bar))))
-
-(setq stack (reverse '( ((:token-type . :metadata)
-                         (:form . "^")
-                         (:pos . 1))
-                        ((:node-type . :keyword)
-                         (:position . 2)
-                         (:form . ":xxx")
-                         (:value . :xxx))
-                        ((:meta . ((:node-type . :keyword)
-                                   (:position . 8)
-                                   (:form . ":foo")
-                                   (:value . :foo)))
-                         (:node-type . :symbol)
-                         (:position . 13)
-                         (:form . "bar")
-                         (:value . bar)))))
-
-- ^:foo bar
-- :xxx
-- ^
-
-(parseclj--take-token (cddr stack) (lambda (e) (not (parseclj-lex-token-p e)))
-                      parseclj-lex--prefix-2-tokens)
-
-(parseclj-lex-token-p (car stack))
-(mapcar #'parseclj-lex-token-p stack)
-
-(parseclj--take-value stack #'value-p)
-(((:node-type . :keyword) (:position . 2) (:form . ":xxx") (:value . :xxx))
- ((:meta (:node-type . :keyword) (:position . 8) (:form . ":foo") (:value . :foo)) (:node-type . :symbol) (:position . 13) (:form . "bar") (:value . bar)))
-
-(parseclj--take-value (cddr stack) #'value-p)
-nil
-
-(top-value-2 (parseclj--take-value (nthcdr (length top-value-1) stack) value-p))
-(opening-token (parseclj--take-token (nthcdr (+ (length top-value-1)
-                                                (length top-value-2))
-                                             stack)
-                                     value-p
-                                     parseclj-lex--prefix-2-tokens))
-new-stack
-
-
-- OPENING-TOKEN (((:token-type . :metadata) (:form . "^") (:pos . 1)))
-- TOP-VALUE-2 (((:node-type . :keyword) (:position . 4) (:form . ":meta1") (:value . :meta1))
-               ((:token-type . :metadata) (:form . "^") (:pos . 11)))
-- TOP-VALUE-1 (((:node-type . :keyword) (:position . 14) (:form . ":meta2") (:value . :meta2)))
-(parseclj-lex-token-p '((:token-type . :metadata) (:form . "^") (:pos . 11)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; walkclj.el ends here
