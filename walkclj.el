@@ -48,6 +48,7 @@
 
 (require 'treepy)
 (require 'parseclj)
+(require 'cl-macs)
 
 (defvar walkclj-function-names '(ffirst
                                  first
@@ -129,7 +130,7 @@ return the inner node if this is the case."
   "Return the name of FORM.
 
 FORM has to be a string, symbol, or keyword."
-  (case (parseclj-ast-node-type form)
+  (cl-case (parseclj-ast-node-type form)
     (:string (a-get form :value))
     (:symbol (a-get form :form))
     (:keyword (substring (a-get form :form) 1))))
