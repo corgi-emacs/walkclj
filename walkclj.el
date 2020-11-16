@@ -139,12 +139,13 @@ FORM has to be a string, symbol, or keyword."
 
 (defun walkclj-current-ns ()
   "Return the Clojure namespace name of the current buffer."
-  (save-excursion
-    (goto-char 1)
-    (let ((ns-form (parseclj-parse-clojure :read-one t)))
-      (walkclj-do
-       (when (and (list? ns-form) (eq 'ns (a-get (first ns-form) :value)))
-         (name (unwrap-meta (second ns-form))))))))
+  (ignore-errors
+    (save-excursion
+      (goto-char 1)
+      (let ((ns-form (parseclj-parse-clojure :read-one t)))
+        (walkclj-do
+         (when (and (list? ns-form) (eq 'ns (a-get (first ns-form) :value)))
+           (name (unwrap-meta (second ns-form)))))))))
 
 (provide 'walkclj)
 
