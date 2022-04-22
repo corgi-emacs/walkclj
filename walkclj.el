@@ -1,4 +1,4 @@
-;;; walkclj.el --- Manipulate Clojure parse trees
+;;; walkclj.el --- Manipulate Clojure parse trees -*- lexical-binding: t -*-
 ;;
 ;; Filename: walkclj.el
 ;; Author: Arne Brasseur
@@ -57,7 +57,9 @@
                                  second
                                  symbol?
                                  symbol-p?
-                                 unwrap-meta))
+                                 unwrap-meta)
+  "Names that are recognized inside walkclj-do and rewritten to be
+walkclj- prefixed.")
 
 (defun walkclj--update-predicate-suffix (sym)
   "Change a symbol SYM that ends in `?' in one that ends in -p."
