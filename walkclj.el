@@ -45,7 +45,7 @@
 
 (require 'treepy)
 (require 'parseclj)
-(require 'cl-macs)
+(require 'cl-lib)
 
 (eval-and-compile
   (defvar walkclj-function-names '(ffirst
@@ -83,7 +83,7 @@ prefixed version are replaced by their prefixed version."
 
                             ((and (listp x)
                                   (keywordp (car x)))
-                             (list* 'a-get (cadr x) (car x) (cddr x)))
+                             (cl-list* 'a-get (cadr x) (car x) (cddr x)))
 
                             (t x)))
                          body)))
