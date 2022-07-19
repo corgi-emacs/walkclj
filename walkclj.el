@@ -47,26 +47,27 @@
 (require 'parseclj)
 (require 'cl-macs)
 
-(defvar walkclj-function-names '(ffirst
-                                 first
-                                 last
-                                 list-p
-                                 list?
-                                 meta
-                                 name
-                                 second
-                                 symbol?
-                                 symbol-p?
-                                 unwrap-meta)
-  "Names that are recognized inside walkclj-do and rewritten to be
+(eval-and-compile
+  (defvar walkclj-function-names '(ffirst
+                                   first
+                                   last
+                                   list-p
+                                   list?
+                                   meta
+                                   name
+                                   second
+                                   symbol?
+                                   symbol-p?
+                                   unwrap-meta)
+    "Names that are recognized inside walkclj-do and rewritten to be
 walkclj- prefixed.")
 
-(defun walkclj--update-predicate-suffix (sym)
-  "Change a symbol SYM that ends in `?' in one that ends in -p."
-  (let ((s (symbol-name sym)))
-    (if (equal "?" (substring s (1- (length s))) )
-        (intern (concat (substring s 0 (1- (length s))) "-p"))
-      sym)))
+  (defun walkclj--update-predicate-suffix (sym)
+    "Change a symbol SYM that ends in `?' in one that ends in -p."
+    (let ((s (symbol-name sym)))
+      (if (equal "?" (substring s (1- (length s))) )
+          (intern (concat (substring s 0 (1- (length s))) "-p"))
+        sym))))
 
 (defmacro walkclj-do (&rest body)
   "Evaluate BODY with auto-prefixing.
