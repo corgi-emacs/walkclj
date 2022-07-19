@@ -5,7 +5,7 @@
 ;; Maintainer: Arne Brasseur
 ;; Created: Mi Jul 18 09:39:10 2018 (+0200)
 ;; Version: 0.2.0
-;; Package-Requires: ((emacs "25") (parseclj "0.1.0") (treepy "0.1.0"))
+;; Package-Requires: ((emacs "25") (parseclj "0.1.0") (treepy "0.1.0") (a "1.0.0"))
 ;; URL: https://github.com/plexus/walkclj
 ;; Keywords: languages
 ;;
@@ -46,6 +46,7 @@
 (require 'treepy)
 (require 'parseclj)
 (require 'cl-lib)
+(require 'a)
 
 (eval-and-compile
   (defvar walkclj-function-names '(ffirst
